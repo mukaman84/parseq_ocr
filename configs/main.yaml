@@ -1,0 +1,66 @@
+defaults:
+  - _self_
+  - model: parseq
+  - charset: 1830_fullkorean
+  - dataset: real
+#  - hydra/job_logging: colorlog
+#  - hydra/hydra_logging: default
+
+model:
+  _convert_: all
+  img_size: [ 32, 128 ]  # [ height, width ]
+  max_label_length: 30
+  # The ordering in charset_train matters. It determines the token IDs assigned to each character.
+  charset_train: ???
+#  charset_train: ???
+  # For charset_test, ordering doesn't matter.
+  charset_test: ???
+  batch_size: 576
+  weight_decay: 0.0
+  warmup_pct: 0.075  # equivalent to 1.5 epochs of warm up
+
+data:
+  _target_: strhub.data.module.SceneTextDataModule
+  root_dir: data
+#  train_dir: ???
+  train_dir: ???
+#  validation_dir: ???
+  batch_size: ${model.batch_size}
+  img_size: ${model.img_size}
+  charset_train: ${model.charset_train}
+  charset_test: ${model.charset_test}
+  max_label_length: ${model.max_label_length}
+  remove_whitespace: false
+  normalize_unicode: false
+  augment: true
+  num_workers: 2
+
+
+trainer:
+  _target_: pytorch_lightning.Trainer
+  _convert_: all
+  val_check_interval: 19274
+#  val_check_interval: 14442
+#  val_check_interval: 34800
+#  max_steps: 169680  # 20 epochs x 8484 steps (for batch size = 384, real data)
+  max_steps: 39274000  # 20 epochs x 8484 steps (for batch size = 384, real data)
+  max_epochs: 1000
+  gradient_clip_val: 20
+  gpus: 1
+  log_every_n_steps: 1
+
+#ckpt_path: outputs/parseq/2022-11-05_23-08-09/checkpoints/last.ckpt
+ckpt_path: outputs/parseq/2023-08-19_12-20-07/checkpoints/epoch=27-step=720300-val_accuracy=93.6181-val_NED=97.0787.ckpt
+#ckpt_path: null
+#latest outputs/parseq/2022-12-03_04-46-26/checkpoints/epoch=9-step=183103-val_accuracy=94.6036-val_NED=97.5790.ckpt
+#ckpt_path: outputs/parseq/2023-08-19_12-20-07/checkpoints/epoch=27-step=720300-val_accuracy=93.6181-val_NED=97.0787.ckpt
+#ckpt_path: null
+pretrained: null
+
+hydra:
+  output_subdir: config
+  run:
+    dir: outputs/${model.name}/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  sweep:
+    dir: multirun/${model.name}/${now:%Y-%m-%d}_${now:%H-%M-%S}
+    subdir: ${hydra.job.override_dirname}

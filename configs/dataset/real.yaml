@@ -1,0 +1,4 @@
+# @package _global_
+data:
+  train_dir: real/
+#  val_dir: real/TextOCR
